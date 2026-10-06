@@ -1,0 +1,103 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Strikebox · team deathmatch</title>
+<meta name="twitter:card" content="player">
+<meta name="twitter:title" content="Strikebox · team deathmatch">
+<meta name="twitter:description" content="Pick CT or T and play in the same match as everyone who opened this.">
+<meta name="twitter:player" content="__ORIGIN__/embed">
+<meta name="twitter:image" content="__ORIGIN__/preview.png">
+<meta property="og:title" content="Strikebox · team deathmatch">
+<meta property="og:image" content="__ORIGIN__/preview.png">
+<meta name="twitter:player:width" content="480">
+<meta name="twitter:player:height" content="480">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#0d0f12;font-family:ui-monospace,Menlo,Consolas,monospace;color:#eee;user-select:none;-webkit-user-select:none;touch-action:none;-webkit-touch-callout:none;overscroll-behavior:none}
+canvas{display:block}
+#hud{position:fixed;inset:0;pointer-events:none}
+#cross{position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%)}
+#cross i{position:absolute;background:#7CFC9A;box-shadow:0 0 2px #000}
+#cross .h1{left:0;top:10px;width:7px;height:2px}#cross .h2{right:0;top:10px;width:7px;height:2px}
+#cross .v1{top:0;left:10px;width:2px;height:7px}#cross .v2{bottom:0;left:10px;width:2px;height:7px}
+#hitm{position:absolute;left:50%;top:50%;width:26px;height:26px;transform:translate(-50%,-50%) rotate(45deg);opacity:0}
+#hitm i{position:absolute;background:#fff}#hitm .a{left:0;top:12px;width:9px;height:2px}#hitm .b{right:0;top:12px;width:9px;height:2px}#hitm .c{top:0;left:12px;width:2px;height:9px}#hitm .d{bottom:0;left:12px;width:2px;height:9px}
+#hp,#ammo{position:absolute;bottom:14px;font-weight:800;font-size:26px;text-shadow:0 2px 4px #000}
+#hp{left:16px}#ammo{right:16px;text-align:right}
+#hp small,#ammo small{display:block;font-size:11px;font-weight:400;opacity:.7;letter-spacing:.1em}
+#score{position:absolute;top:10px;left:50%;transform:translateX(-50%);display:flex;gap:2px;font-weight:800;font-size:18px}
+#score div{padding:5px 14px;background:rgba(0,0,0,.55)}#score .ct{color:#4f8dff;border-radius:6px 0 0 6px}#score .t{color:#f0a43a;border-radius:0 6px 6px 0}
+#feed{position:absolute;top:10px;right:12px;display:flex;flex-direction:column;gap:4px;align-items:flex-end;font-size:12px}
+#feed div{background:rgba(0,0,0,.6);padding:4px 8px;border-radius:4px}
+#dmg{position:absolute;inset:0;box-shadow:inset 0 0 120px rgba(255,0,0,.0)}
+#dead{position:absolute;left:50%;top:62%;transform:translateX(-50%);text-align:center;font-size:15px;background:rgba(0,0,0,.6);padding:10px 16px;border-radius:8px;display:none}
+#board{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(10,12,16,.92);border:1px solid #333;border-radius:10px;padding:14px 18px;min-width:min(520px,92vw);display:none;font-size:13px}
+#board table{width:100%;border-collapse:collapse}#board td{padding:3px 6px}#board .me{background:rgba(255,255,255,.08)}
+#hint{position:absolute;bottom:56px;left:50%;transform:translateX(-50%);font-size:12px;opacity:.75;text-align:center}
+#menu{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,rgba(30,36,48,.85),rgba(5,6,8,.95));z-index:5}
+#menu .box{text-align:center;padding:20px;max-width:440px;width:92vw}
+#menu h1{margin:0;font-size:clamp(34px,9vw,56px);letter-spacing:.04em}#menu h1 b{color:#f0a43a}
+#menu p{opacity:.7;font-size:13px;margin:6px 0 18px}
+#menu input{width:100%;padding:10px 12px;font:inherit;font-size:15px;background:#151a22;border:1px solid #2c3442;border-radius:8px;color:#fff;margin-bottom:12px;text-align:center}
+#menu .teams{display:flex;gap:10px}
+#menu button{flex:1;padding:14px 8px;font:inherit;font-size:16px;font-weight:800;border-radius:10px;border:2px solid;cursor:pointer;background:transparent}
+#menu .bct{color:#4f8dff;border-color:#4f8dff}#menu .bt{color:#f0a43a;border-color:#f0a43a}
+#menu button span{display:block;font-size:11px;font-weight:400;opacity:.8;margin-top:4px}
+#menu .keys{margin-top:16px;font-size:12px;opacity:.65;line-height:1.7}
+#click{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:4;background:rgba(0,0,0,.35);font-size:16px}
+#mute{position:fixed;top:10px;left:12px;z-index:6;background:rgba(0,0,0,.5);border:0;border-radius:6px;font-size:16px;padding:4px 8px;cursor:pointer;pointer-events:auto}
+#hint2{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);font-size:12px;opacity:.75;display:none;background:rgba(0,0,0,.45);padding:4px 10px;border-radius:6px}
+#touch{position:fixed;inset:0;z-index:3;display:none}
+body.touch #touch{display:block}
+body.touch #menu .keys .pc{display:none}body:not(.touch) #menu .keys .mob{display:none}
+#stick{position:absolute;width:110px;height:110px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(255,255,255,.06);display:none;pointer-events:none}
+#knob{position:absolute;left:30px;top:30px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.35)}
+.tb{position:absolute;border-radius:50%;background:rgba(0,0,0,.35);border:2px solid rgba(255,255,255,.35);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:13px}
+.tb.on{background:rgba(255,255,255,.3)}
+.tb[data-btn=fire]{right:24px;bottom:80px;width:92px;height:92px;font-size:15px;border-color:rgba(255,120,90,.8)}
+.tb[data-btn=jump]{right:128px;bottom:40px;width:62px;height:62px}
+.tb[data-btn=reload]{right:30px;bottom:186px;width:54px;height:54px}
+.tb[data-btn=team]{left:14px;top:52px;width:44px;height:44px;font-size:11px;border-radius:10px}
+.tb[data-btn=board]{left:64px;top:52px;width:44px;height:44px;font-size:11px;border-radius:10px}
+.tb[data-btn=mute]{display:none}
+body.touch #mute{top:8px;left:12px}
+body.touch #hp,body.touch #ammo{bottom:auto;top:52px;font-size:20px}body.touch #hp{left:auto;right:120px}body.touch #ammo{right:16px}
+body.touch #hint{bottom:auto;top:44px}
+body.touch #feed{top:104px;left:14px;right:auto;align-items:flex-start}
+#rot{display:none;position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);z-index:7;background:rgba(0,0,0,.7);padding:10px 14px;border-radius:8px;font-size:13px;pointer-events:none}
+@media (orientation:portrait){body.touch #rot{display:block}}
+@media (max-width:560px),(max-height:560px){#hp,#ammo{font-size:20px}#score{font-size:14px}#score div{padding:3px 9px}#feed{font-size:10px}#menu .box{padding:10px}#menu p{margin:4px 0 10px}#menu button{padding:10px 6px;font-size:13px}#menu .keys{margin-top:10px;font-size:10px}}
+</style></head><body>
+<div id="hud">
+  <div id="dmg"></div>
+  <div id="cross"><i class="h1"></i><i class="h2"></i><i class="v1"></i><i class="v2"></i></div>
+  <div id="hitm"><i class="a"></i><i class="b"></i><i class="c"></i><i class="d"></i></div>
+  <div id="score"><div class="ct">CT 0</div><div class="t">0 T</div></div>
+  <div id="feed"></div>
+  <div id="hp">100<small>HEALTH</small></div>
+  <div id="ammo">30 / ∞<small>AMMO</small></div>
+  <div id="dead"></div>
+  <div id="hint"></div>
+  <div id="net" style="position:absolute;top:44px;left:50%;transform:translateX(-50%);background:rgba(160,30,30,.8);padding:4px 10px;border-radius:6px;font-size:12px;display:none"></div>
+  <div id="hint2">hold left mouse to look and shoot</div>
+  <div id="board"></div>
+</div>
+<div id="click">click to play</div>
+<div id="rot">turn your phone sideways</div>
+<button id="mute" title="sound (N)">🔊</button>
+<div id="touch"><div id="stick"><div id="knob"></div></div>
+  <div class="tb" data-btn="fire">FIRE</div><div class="tb" data-btn="jump">JUMP</div><div class="tb" data-btn="reload">R</div>
+  <div class="tb" data-btn="team">TEAM</div><div class="tb" data-btn="board">SCORE</div></div>
+<div id="menu"><div class="box">
+  <h1>STRIKE<b>BOX</b></h1>
+  <p>team deathmatch · everyone who opens this link plays in the same match</p>
+  <input id="name" maxlength="14" placeholder="your name">
+  <div class="teams">
+    <button class="bct" data-team="ct">COUNTER-TERRORISTS<span id="nct">0 players</span></button>
+    <button class="bt" data-team="t">TERRORISTS<span id="nt">0 players</span></button>
+  </div>
+  <div class="keys"><span class="pc">WASD move · mouse aim · click shoot · R reload · space jump<br>Tab score · M switch team · N sound · Esc release mouse</span><span class="mob">left thumb move · right thumb look · hold FIRE to shoot and aim</span></div>
+</div></div>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+<script type="module" src="./game.js"></script>
+</body></html>
